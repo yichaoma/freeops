@@ -12,8 +12,20 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 
+try:
+    import ConfigParser as cp
+except ImportError as e:
+    import configparser as cp
+
+
+
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+config = cp.ConfigParser()
+config.read(os.path.join(BASE_DIR,'freeops.conf'))
+
 
 
 # Quick-start development settings - unsuitable for production
