@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
-import os
+import os,socket
 
 try:
     import ConfigParser as cp
@@ -35,9 +35,14 @@ config.read(os.path.join(BASE_DIR,'freeops.conf'))
 SECRET_KEY = 'f@k!2*u3oh(w=41y%1!!h$(plapasaj5*-50hoat9jl(c%+-aq'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if socket.gethostname() == config.get('config','PRODUCTION_ENV'):
+    DEBUG = False
+else:
+    DEBUG = True
 
-ALLOWED_HOSTS = []
+
+
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -55,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -85,13 +90,47 @@ WSGI_APPLICATION = 'freeops.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+DATABASES = {}
+if socket.gethostname() == config.get('config','PRODUCTION_ENV'):
+    DB_HOST = config.get('db', 'host')
+    DB_PORT = config.getint('db', 'port')
+    DB_USER = config.get('db', 'user')
+    DB_PASSWORD = config.get('db', 'password')
+    DB_DATABASE = config.get('db', 'database')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_DATABASE,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'DEFAULT_CHARSET': 'utf-8',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
+else:
+    DB_HOST = config.get('testdb', 'host')
+    DB_PORT = config.getint('testdb', 'port')
+    DB_USER = config.get('testdb', 'user')
+    DB_PASSWORD = config.get('testdb', 'password')
+    DB_DATABASE = config.get('testdb', 'database')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_DATABASE,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'DEFAULT_CHARSET': 'utf-8',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
 
 
 # Password validation
@@ -118,7 +157,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -131,3 +170,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS=(os.path.join(BASE_DIR, "static"),)
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = config.get('mail','host')
+EMAIL_PORT = config.get('mail','port')
+EMAIL_HOST_USER = config.get('mail','user')
+EMAIL_HOST_PASSWORD = config.get('mail','password')
+DEFAULT_FROM_EMAIL = config.get('mail','from')
+
